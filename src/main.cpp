@@ -1,21 +1,14 @@
-#include <DHTesp.h>
 #include <gfx.h>
-
-DHTesp dht;
-
-#define DHT_PIN 23
-
+#include "temperature/temperature.h"
 
 font_t font = gdispOpenFont("DejaVuSans32");
+TemperatureSensor temperatureSensor;
 
 void setup() {
   gCoord		width, height;
-  gCoord		i, j;
 
   Serial.begin(115200);
   delay(10);
-
-  dht.setup(DHT_PIN, DHTesp::DHT22);
 
   // Initialize and clear the display
   Serial.println("gfxInit");
@@ -76,11 +69,7 @@ void loop() {
   // Serial.println();
   // put your main code here, to run repeatedly:
   
-  TempAndHumidity readValues = dht.getTempAndHumidity();
-  if (dht.getStatus() != 0) {
-    Serial.println("DHT22 error: " + String(dht.getStatusString()));
-    return;
-  }
+  TempAndHumidity readValues = temperatureSensor.getTempAndHumidity();
 
   gCoord width, height;
   width = gdispGetWidth();
