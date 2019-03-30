@@ -21,7 +21,7 @@ String cityId = "2852458";  // Potsdam
 
 
 void connectToWifi() {
-  WiFi.enableSTA(true);
+  WiFi.mode(WIFI_STA);
   delay(2000);
   WiFi.begin(ssid, password);
 
@@ -32,15 +32,25 @@ void connectToWifi() {
   Serial.println("Connected!");
 }
 
-// static gdispImage image;
+static gdispImage image;
 
 void setup() {
-  // gCoord		width, height;
+  gCoord		width, height;
 
   Serial.begin(115200);
   delay(10);
 
+  Serial.println(ESP.getFreeHeap());
+  Serial.println("gfxInit");
+  gfxInit();
+  Serial.println("gfxInit done");
+  Serial.println(ESP.getFreeHeap());
+
+  // fix display memory
+
   connectToWifi();
+  Serial.println(ESP.getFreeHeap());
+
   WeatherAPI api = WeatherAPI(cityId);
   std::vector<WeatherData> weatherInfo;
   api.fetchForecast(weatherInfo);
@@ -54,43 +64,34 @@ void setup() {
     return;
   }
 
-  // xTaskCreate(
-  //   initGFX,
-  //   "InitGFX",
-  //   10000,
-  //   NULL,
-  //   1,
-  //   NULL
-  // );
-}
+  GFILE* imageData = gfileOpenMemory(reinterpret_cast<void*>(icon.get()), "rb");
+  Serial.println("file is open");
+  gdispImageError err = gdispImageOpenGFile(&image, imageData);
 
-
-void initGFX(void* params) {
-  Serial.println("gfxInit");
-  gfxInit();
-  Serial.println("gfxInit done");
+  if (err) {
+    Serial.println("Error opening Image");
+    Serial.println(err, HEX);
+  }
 
   // Get the screen size
-  Serial.println("get width");
-  coord_t width = gdispGetWidth();
+  width = gdispGetWidth();
   Serial.printf("width %d\n", width);
-  Serial.println("get width");
-  coord_t height = gdispGetHeight();
+  height = gdispGetHeight();
   Serial.printf("height %d", height);
   Serial.println();
 
-  // Code Here
-  Serial.println("clear screen");
-  gdispClear(GFX_WHITE);
-  // gdispFillArea(width / 2, height / 2, width / 2 - 10, height / 2 - 10, GFX_BLACK);
-  font_t font = gdispOpenFont("DejaVuSans16");
-  gdispDrawString(10, height / 3, "Dies ist ein Test!", font, GFX_BLACK);
-  gdispCloseFont(font);
+  Serial.printf("image width: %d\n", image.width);
+  Serial.printf("image height: %d\n", image.height);
 
-  Serial.println("flush screen");
+  // render image
+  gdispClear(GFX_BLACK);
+  gdispImageDraw(&image, 0, 0, image.width, image.height, 0, 0);
+  gdispImageClose(&image);
+  gfileClose(imageData);
   gdispFlush();
 
-  vTaskDelete(NULL);
+  gPowermode powerMode = gdispGetPowerMode();
+  Serial.printf("powermode: %d", powerMode);
 }
 
   // Initialize and clear the display

@@ -38,9 +38,9 @@ gU8 tconResolutionData[] = {0x02, 0x80, 0x01, 0x80};
 gU8 vcmDcSettingData[] = {0x1e};
 gU8 flashModeData[] = {0x03};
 
-/* Every data byte determines 8 pixels. */
+/* Every data byte determines 4 pixels. */
 #ifndef WS75bEPD_PPB
-  #define WS75bEPD_PPB   2
+  #define WS75bEPD_PPB   4
 #endif
 
 /*===========================================================================*/
@@ -55,7 +55,7 @@ gU8 flashModeData[] = {0x03};
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
-void startUpDisplay(GDisplay* g) {
+static inline void startUpDisplay(GDisplay* g) {
 	write_reg_data(g, POWER_SETTING, powerSettingData, BLOCK_SIZE(powerSettingData));
 	write_reg_data(g, PANEL_SETTING, panelSettingData, BLOCK_SIZE(panelSettingData));
 	write_reg_data(g, BOOSTER_SOFT_START, boosterSoftStartData, BLOCK_SIZE(boosterSoftStartData));
@@ -74,7 +74,7 @@ void startUpDisplay(GDisplay* g) {
 	gfxSleepMilliseconds(2);
 }
 
-void resetDisplay(GDisplay* g) {
+static inline void resetDisplay(GDisplay* g) {
 	setpin_reset(g, gFalse);
 	gfxSleepMilliseconds(200);
 	setpin_reset(g, gTrue);
@@ -133,29 +133,59 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		break;
 	case gOrientation90:
 		x = g->p.y;
-		y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+		y = GDISP_SCREEN_HEIGHT - 1 - g->p.x;
 		break;
 	case gOrientation180:
-		x = GDISP_SCREEN_WIDTH-1 - g->p.x;
-		y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+		x = GDISP_SCREEN_WIDTH - 1 - g->p.x;
+		y = GDISP_SCREEN_HEIGHT - 1 - g->p.y;
 		break;
 	case gOrientation270:
-		x = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+		x = GDISP_SCREEN_HEIGHT - 1 - g->p.y;
 		y = g->p.x;
 		break;
 	}
 	/* There is only black and no black (white). TODO: RED is not supported yet */
 	// 1. Delete old colour (delete high or low bits depending on position)
-	((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] &= (x % 2 ? 240 : 15);
+	gU8 bitmask;
+	gU8 shift;
+	switch (x % 4) {
+		case 0:
+			bitmask = 252;  // 1111 1100
+			shift = 0;
+			break;
+		case 1:
+			bitmask = 243;  // 1111 0011
+			shift = 2;
+			break;
+		case 2:
+			bitmask = 207;  // 1100 1111
+			shift = 4;
+			break;
+		default:
+			bitmask = 63;   // 0011 1111
+			shift = 6;
+			break;
+	}
+	((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] &= bitmask;
 	if (gdispColor2Native(g->p.color) != Black) // Indexing in the array is done as described in the init routine
 		// render a white pixel
-		((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 3 << (x % 2 ? 0 : 4);
+		((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 3 << shift;
 		// render a red pixel
-		// ((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 4 << (x % 2 ? 4 : 0);
+		// ((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 1 << shift;
 }
 #endif
 
 #if GDISP_HARDWARE_FLUSH
+static inline gU8 convertPixel(gU8 data) {
+	// pixel data is in the two-most right bits
+	data = data & 3;
+	if (data == 1) {
+		// the pixel is supposed to be red, we need to adjust
+		data <<= 2;
+	}
+	return data;
+}
+
 LLDSPEC void gdisp_lld_flush(GDisplay *g) {
 	// the display needs to awake from deep sleep, so we first check the current powerMode and if the display is not
 	// sleeping, we need to put it to sleep and then awake it
@@ -165,8 +195,20 @@ LLDSPEC void gdisp_lld_flush(GDisplay *g) {
 	acquire_bus(g);
 		
 	for(int i=0; i<GDISP_SCREEN_HEIGHT; i++)
-		for(int j=0; j<=((GDISP_SCREEN_WIDTH-1)/WS75bEPD_PPB); j++)
-			write_data(g, ((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*j) + i]);
+		for(int j=0; j<=((g->g.Width-1)/WS75bEPD_PPB); j++) {
+			gU8 pixelValues = ((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*j) + i];
+			// as we are storing a pixel in 2 bits instead of 4 we need to extract that data now
+			for (int k=0; k<2; ++k) {
+				// put the pixels we are currently dealing with to the lower part
+				pixelValues >>= k * 4;
+				// first pixel is implemented in the two most right bits
+				gU8 firstPixel = convertPixel(pixelValues);
+				// put the second pixel in place of first pixel and extract info
+				gU8 secondPixel = convertPixel(pixelValues >> 2);
+				gU8 data = (secondPixel << 4) | firstPixel;
+				write_data(g, data);
+			}
+		}
 		
 	/* Update the screen. */
 	write_cmd(g, DISPLAY_REFRESH);
