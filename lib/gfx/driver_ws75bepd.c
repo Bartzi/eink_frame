@@ -38,6 +38,11 @@ gU8 tconResolutionData[] = {0x02, 0x80, 0x01, 0x80};
 gU8 vcmDcSettingData[] = {0x1e};
 gU8 flashModeData[] = {0x03};
 
+/* dithering theshold matrix */
+gU8 thresholdMatrix[] = {0, 7, 3, 6, 5, 2, 4, 1, 8};
+float thresholdDivisor = 9;
+
+
 /* Every data byte determines 4 pixels. */
 #ifndef WS75bEPD_PPB
   #define WS75bEPD_PPB   4
@@ -72,6 +77,23 @@ static inline void startUpDisplay(GDisplay* g) {
 
 	write_cmd(g, DATA_START_TRANSMISSION_1);
 	gfxSleepMilliseconds(2);
+}
+
+inline gU8 orderedDithering(GDisplay* g, gCoord x, gCoord y) {
+	gColor redChannel = EXACT_RED_OF(g->p.color);
+	float thresholdingFactor = (float)(thresholdMatrix[y % 3 * 3 + x % 3]) / thresholdDivisor - 0.5;
+
+	redChannel = redChannel + (int)(85.0 * thresholdingFactor);
+
+	gU8 colorValue;
+	if (redChannel < 85) {
+		colorValue = PIXEL_COLOR_BLACK;
+	} else if (redChannel >= 85 && redChannel < 170) {
+		colorValue = PIXEL_COLOR_RED;
+	} else {
+		colorValue = PIXEL_COLOR_WHITE;
+	}
+	return colorValue;
 }
 
 static inline void resetDisplay(GDisplay* g) {
@@ -168,22 +190,21 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 	}
 	((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] &= bitmask;
 	
-	// do threshold dithering
-	gColor color = EXACT_LUMA_OF(g->p.color);
 	gU8 colorValue;
-	if (color < 85) {
-		colorValue = 0;
-	} else if (color >= 85 && color < 170) {
-		colorValue = 1;
-	} else {
-		colorValue = 3;
-	}
+	switch (g->p.color) {
+		case GFX_WHITE:
+			colorValue = PIXEL_COLOR_WHITE;
+			break;
+		case GFX_BLACK:
+			colorValue = PIXEL_COLOR_BLACK;
+			break;
+		case GFX_RED:
+			colorValue = PIXEL_COLOR_RED;
+			break;
+		default:
+			colorValue = orderedDithering(g, x, y);
+	}	
 	((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= colorValue << shift;
-	// if (gdispColor2Native(g->p.color) != Black) // Indexing in the array is done as described in the init routine
-	// 	// render a white pixel
-	// 	((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 3 << shift;
-	// 	// render a red pixel
-	// 	// ((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 1 << shift;
 }
 #endif
 

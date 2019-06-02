@@ -11,7 +11,7 @@
 #ifndef GDISP_LLD_BOARD_H
 #define GDISP_LLD_BOARD_H
 
-#include <arduino.h>
+#include <Arduino.h>
 #include <gfx.h>
 #include "WS75bEPD.h"
 

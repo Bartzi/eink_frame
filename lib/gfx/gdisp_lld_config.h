@@ -17,6 +17,10 @@
 
 #define GDISP_LLD_PIXELFORMAT           GDISP_PIXELFORMAT_RGB888
 
+#define PIXEL_COLOR_WHITE 3
+#define PIXEL_COLOR_BLACK 0
+#define PIXEL_COLOR_RED 1
+
 #endif
 
 #endif
