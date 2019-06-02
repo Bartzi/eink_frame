@@ -84,7 +84,7 @@ void setup() {
   Serial.printf("image height: %d\n", image.height);
 
   // render image
-  gdispClear(GFX_BLACK);
+  gdispClear(GFX_WHITE);
   gdispImageDraw(&image, 0, 0, image.width, image.height, 0, 0);
   gdispImageClose(&image);
   gfileClose(imageData);

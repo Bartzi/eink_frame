@@ -167,11 +167,23 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 			break;
 	}
 	((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] &= bitmask;
-	if (gdispColor2Native(g->p.color) != Black) // Indexing in the array is done as described in the init routine
-		// render a white pixel
-		((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 3 << shift;
-		// render a red pixel
-		// ((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 1 << shift;
+	
+	// do threshold dithering
+	gColor color = EXACT_LUMA_OF(g->p.color);
+	gU8 colorValue;
+	if (color < 85) {
+		colorValue = 0;
+	} else if (color >= 85 && color < 170) {
+		colorValue = 1;
+	} else {
+		colorValue = 3;
+	}
+	((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= colorValue << shift;
+	// if (gdispColor2Native(g->p.color) != Black) // Indexing in the array is done as described in the init routine
+	// 	// render a white pixel
+	// 	((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 3 << shift;
+	// 	// render a red pixel
+	// 	// ((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] |= 1 << shift;
 }
 #endif
 
