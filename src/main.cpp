@@ -8,6 +8,7 @@ extern "C" {
 
 #include "temperature/temperature.h"
 #include "weather/weather_api.h"
+#include "weather_ui/weather_ui.h"
 #include "wifi_credentials.h"
 
 
@@ -32,11 +33,7 @@ void connectToWifi() {
   Serial.println("Connected!");
 }
 
-static gdispImage image;
-
 void setup() {
-  gCoord		width, height;
-
   Serial.begin(115200);
   delay(10);
 
@@ -51,132 +48,16 @@ void setup() {
   connectToWifi();
   Serial.println(ESP.getFreeHeap());
 
-  WeatherAPI api = WeatherAPI(cityId);
-  std::vector<WeatherData> weatherInfo;
-  api.fetchForecast(weatherInfo);
-
-  std::unique_ptr<uint8_t[]> icon;
-  try {
-    icon = api.fetchWeatherIcon(weatherInfo[0].icon);
-  } catch (const std::logic_error &e) {
-    Serial.println(F("Could not fetch weather icon"));
-    Serial.println(e.what());
-    return;
-  }
-
-  GFILE* imageData = gfileOpenMemory(reinterpret_cast<void*>(icon.get()), "rb");
-  Serial.println("file is open");
-  gdispImageError err = gdispImageOpenGFile(&image, imageData);
-
-  if (err) {
-    Serial.println("Error opening Image");
-    Serial.println(err, HEX);
-  }
-
-  // Get the screen size
-  width = gdispGetWidth();
-  Serial.printf("width %d\n", width);
-  height = gdispGetHeight();
-  Serial.printf("height %d", height);
-  Serial.println();
-
-  Serial.printf("image width: %d\n", image.width);
-  Serial.printf("image height: %d\n", image.height);
-
-  // render image
-  gdispClear(GFX_WHITE);
-  gdispImageDraw(&image, 0, 0, image.width, image.height, 0, 0);
-  gdispImageClose(&image);
-  gfileClose(imageData);
-  gdispFlush();
+  WeatherUI ui = WeatherUI(cityId, gdispGetDisplay(0));
+  auto heapBefore = ESP.getFreeHeap();
+  ui.updateForecast();
+  auto heapAfter = ESP.getFreeHeap();
+  
+  Serial.printf("Heap: Before - After: %d\n", heapBefore - heapAfter);
 
   gPowermode powerMode = gdispGetPowerMode();
   Serial.printf("powermode: %d", powerMode);
 }
-
-  // Initialize and clear the display
-  
-
-  // connectToWifi();
-  // WeatherAPI api = WeatherAPI(cityId);
-  // std::vector<WeatherData> weatherInfo;
-  // api.fetchForecast(weatherInfo);
-
-  // std::unique_ptr<uint8_t[]> icon;
-  // try {
-  //   icon = api.fetchWeatherIcon(weatherInfo[0].currentCondition.icon);
-  // } catch (const std::logic_error &e) {
-  //   Serial.println(F("Could not fetch weather icon"));
-  //   Serial.println(e.what());
-  //   return;
-  // }
-
-  // GFILE* imageData = gfileOpenMemory(reinterpret_cast<void*>(icon.get()), "rb");
-  // Serial.println("file is open");
-  // gdispImageError err = gdispImageOpenGFile(&image, imageData);
-
-  // if (err) {
-  //   Serial.println("Error opening Image");
-  //   Serial.println(err, HEX);
-  // }
-
-  // // Get the screen size
-  // coord_t width = gdispGetWidth();
-  // Serial.printf("width %d\n", width);
-  // coord_t height = gdispGetHeight();
-  // Serial.printf("height %d", height);
-  // Serial.println();
-
-  // // render image
-  // gdispClear(GFX_WHITE);
-  // gdispImageDraw(&image, 0, 0, image.width, image.height, 0, 0);
-  // gdispImageClose(&image);
-  // gfileClose(imageData);
-  // gdispFlush();
-
-  // gPowermode powerMode = gdispGetPowerMode();
-  // Serial.printf("powermode: %d", powerMode);
-  // Serial.println();
-  // unsigned displayCount = gdispGetDisplayCount();
-  // Serial.printf("num displays %d", displayCount);
-  // Serial.println();
-
-  // GDisplay* display = gdispGetDisplay(0);
-
-  // gPowermode powerMode = gdispGGetPowerMode(display);
-  // Serial.printf("powermode: %d", powerMode);
-  // Serial.println();
-
-  // gdispSetPowerMode(gPowerDeepSleep);
-  // powerMode = gdispGGetPowerMode(display);
-  // Serial.printf("powermode: %d", powerMode);
-  // Serial.println();
-
-  // gdispSetPowerMode(gPowerOn);
-  // powerMode = gdispGGetPowerMode(display);
-  // Serial.printf("powermode: %d", powerMode);
-  // Serial.println();
-
-  // Code Here
-  // Serial.println("clear screen");
-  // gdispClear(GFX_WHITE);
-  // // gdispFillArea(width / 2, height / 2, width / 2 - 10, height / 2 - 10, GFX_BLACK);
-  // font_t font = gdispOpenFont("DejaVuSans16");
-  // gdispDrawString(10, height / 3, "Dies ist ein Test!", font, GFX_BLACK);
-  // gdispCloseFont(font);
-  // for (i = 5, j = 0; i < width && j < height; i += 7, j += i / 20)
-  //   gdispDrawPixel(i, j, GFX_WHITE);
-
-  // Serial.println("flush screen");
-  // gdispFlush();
-
-  // Serial.println("sleep");
-  // gdispSetPowerMode(gPowerDeepSleep);
-
-//   powerMode = gdispGetPowerMode();
-//   Serial.printf("powermode: %d", powerMode);
-//   Serial.println();
-// }
 
 void loop() {
   // // gPowermode powerMode = gdispGetPowerMode();

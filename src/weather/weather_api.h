@@ -15,6 +15,7 @@ typedef struct {
     float windDirection;
     String icon;
     String date;
+    String city;
 } WeatherData;
 
 

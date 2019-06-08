@@ -63,6 +63,9 @@ void WeatherAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
         JsonObject condition = timeStep["weather"][0];
         data.icon = String(condition["icon"].as<char*>());
 
+        data.date = String(timeStep["dt_txt"].as<char*>()).substring(10, 16);
+        data.city = String(jsonData["city"]["name"].as<char*>());
+
         weatherData.push_back(data);
     }
 
