@@ -80,16 +80,14 @@ static inline void startUpDisplay(GDisplay* g) {
 }
 
 inline gU8 orderedDithering(GDisplay* g, gCoord x, gCoord y) {
-	gColor redChannel = EXACT_RED_OF(g->p.color);
+	gColor luma = EXACT_LUMA_OF(g->p.color);
 	float thresholdingFactor = (float)(thresholdMatrix[y % 3 * 3 + x % 3]) / thresholdDivisor - 0.5;
 
-	redChannel = redChannel + (int)(85.0 * thresholdingFactor);
+	luma = luma + (int)(128.0 * thresholdingFactor);
 
 	gU8 colorValue;
-	if (redChannel < 85) {
+	if (luma < 128) {
 		colorValue = PIXEL_COLOR_BLACK;
-	} else if (redChannel >= 85 && redChannel < 170) {
-		colorValue = PIXEL_COLOR_RED;
 	} else {
 		colorValue = PIXEL_COLOR_WHITE;
 	}
@@ -166,8 +164,8 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		y = g->p.x;
 		break;
 	}
-	/* There is only black and no black (white). TODO: RED is not supported yet */
-	// 1. Delete old colour (delete high or low bits depending on position)
+
+	// 1. Delete old color (delete high or low bits depending on position)
 	gU8 bitmask;
 	gU8 shift;
 	switch (x % 4) {
@@ -190,6 +188,7 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 	}
 	((gU8 *)g->priv)[(GDISP_SCREEN_HEIGHT*(x/WS75bEPD_PPB)) + y] &= bitmask;
 	
+	// 2. set new color
 	gU8 colorValue;
 	switch (g->p.color) {
 		case GFX_WHITE:
@@ -234,10 +233,10 @@ LLDSPEC void gdisp_lld_flush(GDisplay *g) {
 			for (int k=0; k<2; ++k) {
 				// put the pixels we are currently dealing with to the lower part
 				pixelValues >>= k * 4;
-				// first pixel is implemented in the two most right bits
-				gU8 firstPixel = convertPixel(pixelValues);
-				// put the second pixel in place of first pixel and extract info
-				gU8 secondPixel = convertPixel(pixelValues >> 2);
+				// first pixel is implemented in the third and fourth bit from the right (ENDIANESS!!)
+				gU8 firstPixel = convertPixel(pixelValues >> 2);
+				// the second pixel is in the most right bits
+				gU8 secondPixel = convertPixel(pixelValues);
 				gU8 data = (secondPixel << 4) | firstPixel;
 				write_data(g, data);
 			}
