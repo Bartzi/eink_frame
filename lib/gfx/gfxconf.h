@@ -161,7 +161,8 @@
 //#define GDISP_DEFAULT_ORIENTATION                    gOrientationLandscape    // If not defined the native hardware orientation is used.
 //#define GDISP_LINEBUF_SIZE                           128
 #define GDISP_STARTUP_COLOR                          GFX_WHITE
-#define GDISP_NEED_STARTUP_LOGO                      GFXON
+#define GDISP_NEED_STARTUP_LOGO                      GFXOFF
+#define GDISP_STARTUP_LOGO_TIMEOUT                   0 
 
 //#define GDISP_TOTAL_DISPLAYS                         1
 

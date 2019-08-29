@@ -32,17 +32,32 @@ void WeatherUI::updateForecast() {
         gdispGDrawBox(display, startX, startY, boxWidth, boxHeight, GFX_BLACK);
 
         renderCenteredString(weatherInfo[i].date, startX, startY + 10, boxWidth, timeFont, GFX_BLACK);
-        showImage(static_cast<void*>(icon.get()), startX, startY + 55, boxWidth);
-        renderCenteredString(String(weatherInfo[i].temperature) + F(" C"), startX, startY + 115, boxWidth, infoFont, GFX_BLACK);
-        renderCenteredString(String(weatherInfo[i].maxTemperature) + F(" C"), startX, startY + 145, boxWidth, infoFont, GFX_RED);
-        renderCenteredString(String(weatherInfo[i].minTemperature) + F(" C"), startX, startY + 165, boxWidth, infoFont, GFX_BLACK);
-        renderCenteredString(String(weatherInfo[i].humidity) + F(" %"), startX, startY + 185, boxWidth, infoFont, GFX_BLACK);
-        renderCenteredString(String(weatherInfo[i].pressure) + F(" hPa"), startX, startY + 205, boxWidth, infoFont, GFX_BLACK);
+        showImage(static_cast<void*>(icon.get()), startX, startY + 50, boxWidth);
+        renderCenteredString(String(weatherInfo[i].temperature) + F(" C"), startX, startY + 130, boxWidth, infoFont, GFX_BLACK);
+        renderCenteredString(String(weatherInfo[i].maxTemperature) + F(" C"), startX, startY + 160, boxWidth, infoFont, GFX_RED);
+        renderCenteredString(String(weatherInfo[i].minTemperature) + F(" C"), startX, startY + 180, boxWidth, infoFont, GFX_BLACK);
+        renderCenteredString(String(weatherInfo[i].humidity) + F(" %"), startX, startY + 200, boxWidth, infoFont, GFX_BLACK);
+        renderCenteredString(String(weatherInfo[i].pressure) + F(" hPa"), startX, startY + 220, boxWidth, infoFont, GFX_BLACK);
     }
 
     gdispGFlush(display);
     gdispCloseFont(timeFont);
     gdispCloseFont(infoFont);
+}
+
+void WeatherUI::showConnectionError(String ssid, String timeout) {
+    font_t font = gdispOpenFont("DejaVuSans32");
+    String text = String(F("Could not connect to WiFi!"));
+    renderCenteredString(text, 0, 150, 640, font, GFX_RED);
+
+    text = String(F("(")) + ssid + F(")");
+    renderCenteredString(text, 0, 190, 640, font, GFX_BLACK);
+
+    text = String(F("Trying again in ")) + timeout + F(" minutes");
+    renderCenteredString(text, 0, 230, 640, font, GFX_BLACK);
+
+    gdispGFlush(display);
+    gdispCloseFont(font);
 }
 
 void WeatherUI::showImage(void* data, coord_t startX, coord_t startY, coord_t maxWidth) {
@@ -61,7 +76,6 @@ void WeatherUI::showImage(void* data, coord_t startX, coord_t startY, coord_t ma
     coord_t imageStartX = startX + (maxWidth - image.width) / 2;
     coord_t imageStartY = startY;
     
-    gdispGFillArea(display, imageStartX, imageStartY, image.width, image.height, GFX_RED);
     gdispImageDraw(&image, imageStartX, imageStartY, image.width, image.height, 0, 0);
     gdispImageClose(&image);
     gfileClose(imageData);

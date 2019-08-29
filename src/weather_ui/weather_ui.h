@@ -10,6 +10,7 @@ class WeatherUI {
     public:
         WeatherUI(String cityId, GDisplay* display);
         void updateForecast();
+        void showConnectionError(String ssid, String timeout);
 
     private:
         void showImage(void* data, coord_t startX, coord_t startY, coord_t maxWidth);

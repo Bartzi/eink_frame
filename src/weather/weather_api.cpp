@@ -73,32 +73,36 @@ void WeatherAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
 }
 
 std::unique_ptr<uint8_t[]> WeatherAPI::fetchWeatherIcon(String iconId) {
-    HTTPClient http;
+    HTTPClient https;
 
-    String url = this->iconEndpoint + "/img/w/" + iconId + ".png";
-    http.begin(url);
+    String iconName = this->iconMap[iconId];
+    String url = this->iconEndpoint + "/icons/download/black/" + iconName + "-64.png";
+    if (!https.begin(url, iconCertificate)) {
+        Serial.println(F("[HTTP] Can not establish connection to Server."));
+        throw std::logic_error("Can not establish HTTP connection!");
+    }
 
-    int httpCode = http.GET();
+    int httpCode = https.GET();
     Serial.print(F("[HTTP] GET... code: "));
     Serial.println(httpCode);
 
     if (httpCode != HTTP_CODE_OK) {
         Serial.print(F("[HTTP] GET... failed, error: "));
-        Serial.println(http.errorToString(httpCode));
-        http.end();
+        Serial.println(https.errorToString(httpCode));
+        https.end();
         throw std::logic_error("HTTP Code not OK");
     }
 
-    int total = http.getSize();
+    int total = https.getSize();
     int remaining = total;
 
     uint8_t buffer[128] = {0};
     std::unique_ptr<uint8_t[]> destination{new uint8_t[total]};
     int position = 0;
 
-    WiFiClient* stream = http.getStreamPtr();
+    WiFiClient* stream = https.getStreamPtr();
 
-    while(http.connected() && (remaining > 0 || remaining == -1)) {
+    while(https.connected() && (remaining > 0 || remaining == -1)) {
         size_t size = stream->available();
 
         if (size) {
@@ -119,6 +123,6 @@ std::unique_ptr<uint8_t[]> WeatherAPI::fetchWeatherIcon(String iconId) {
     }
     
     Serial.println(F("[HTTP] Finished Download"));
-    http.end();
+    https.end();
     return std::move(destination);
 }
