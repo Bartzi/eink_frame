@@ -95,8 +95,8 @@
    #define GDISP_NEED_TEXT_WORDWRAP                  GFXON
 //    #define GDISP_NEED_TEXT_BOXPADLR                 1
 //    #define GDISP_NEED_TEXT_BOXPADTB                 1
-//    #define GDISP_NEED_ANTIALIAS                     GFXOFF
-//    #define GDISP_NEED_UTF8                          GFXOFF
+   #define GDISP_NEED_ANTIALIAS                     GFXOFF
+   #define GDISP_NEED_UTF8                          GFXON
 //    #define GDISP_NEED_TEXT_KERNING                  GFXOFF
 //    #define GDISP_INCLUDE_FONT_UI1                   GFXOFF
 //    #define GDISP_INCLUDE_FONT_UI2                   GFXOFF		// The smallest preferred font.
@@ -106,7 +106,7 @@
    #define GDISP_INCLUDE_FONT_DEJAVUSANS16           GFXON
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS20          GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS24          GFXOFF
-   #define GDISP_INCLUDE_FONT_DEJAVUSANS32          GFXON
+   #define GDISP_INCLUDE_FONT_DEJAVUSANS32           GFXON
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12      GFXOFF
 //    #define GDISP_INCLUDE_FONT_FIXED_10X20           GFXOFF
 //    #define GDISP_INCLUDE_FONT_FIXED_7X14            GFXOFF
@@ -115,11 +115,11 @@
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS16_AA       GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS20_AA       GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS24_AA       GFXOFF
-   #define GDISP_INCLUDE_FONT_DEJAVUSANS32_AA       GFXON
+   #define GDISP_INCLUDE_FONT_DEJAVUSANS32_AA       GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12_AA   GFXOFF
 //    #define GDISP_INCLUDE_USER_FONTS                 GFXOFF
 
-//#define GDISP_NEED_IMAGE                             GFXOFF
+#define GDISP_NEED_IMAGE                             GFXON
 //    #define GDISP_NEED_IMAGE_NATIVE                  GFXOFF
 //    #define GDISP_NEED_IMAGE_GIF                     GFXOFF
 //        #define GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE     32
@@ -134,7 +134,7 @@
 //        #define GDISP_NEED_IMAGE_BMP_32              GFXON
 //        #define GDISP_IMAGE_BMP_BLIT_BUFFER_SIZE     32
 //    #define GDISP_NEED_IMAGE_JPG                     GFXOFF
-//    #define GDISP_NEED_IMAGE_PNG                     GFXOFF
+   #define GDISP_NEED_IMAGE_PNG                     GFXON
 //        #define GDISP_NEED_IMAGE_PNG_INTERLACED      GFXOFF
 //        #define GDISP_NEED_IMAGE_PNG_TRANSPARENCY    GFXON
 //        #define GDISP_NEED_IMAGE_PNG_BACKGROUND      GFXON
@@ -160,8 +160,9 @@
 
 //#define GDISP_DEFAULT_ORIENTATION                    gOrientationLandscape    // If not defined the native hardware orientation is used.
 //#define GDISP_LINEBUF_SIZE                           128
-//#define GDISP_STARTUP_COLOR                          GFX_BLACK
-#define GDISP_NEED_STARTUP_LOGO                      GFXON
+#define GDISP_STARTUP_COLOR                          GFX_WHITE
+#define GDISP_NEED_STARTUP_LOGO                      GFXOFF
+#define GDISP_STARTUP_LOGO_TIMEOUT                   0 
 
 //#define GDISP_TOTAL_DISPLAYS                         1
 
@@ -311,7 +312,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // GFILE                                                                 //
 ///////////////////////////////////////////////////////////////////////////
-//#define GFX_USE_GFILE                                GFXOFF
+#define GFX_USE_GFILE                                GFXON
 
 //#define GFILE_NEED_PRINTG                            GFXOFF
 //#define GFILE_NEED_SCANG                             GFXOFF
@@ -321,7 +322,7 @@
 //#define GFILE_NEED_NOAUTOMOUNT                       GFXOFF
 //#define GFILE_NEED_NOAUTOSYNC                        GFXOFF
 
-//#define GFILE_NEED_MEMFS                             GFXOFF
+#define GFILE_NEED_MEMFS                             GFXON
 //#define GFILE_NEED_ROMFS                             GFXOFF
 //#define GFILE_NEED_RAMFS                             GFXOFF
 //#define GFILE_NEED_FATFS                             GFXOFF
