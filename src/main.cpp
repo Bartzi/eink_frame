@@ -8,9 +8,12 @@ extern "C" {
 
 #include "temperature/temperature.h"
 #include "weather/weather_api.h"
-#include "weather_ui/weather_ui.h"
+#include "weather_ui/accuweather_ui.h"
+// #include "weather_ui/openweathermap_ui.h"
 #include "wifi_credentials.h"
 
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define S_TO_MIN_FACTOR 60
@@ -23,7 +26,8 @@ TemperatureSensor temperatureSensor;
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
 
-String cityId = "2852458";  // Potsdam
+// String cityId = "2852458";  // Potsdam
+String cityId = "167904";  // Potsdam
 
 
 bool connectToWifi(bool withPassword) {
@@ -76,6 +80,7 @@ void gotoSleep(uint sleepTime) {
 }
 
 void setup() {
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   Serial.begin(115200);
   delay(10);
 
@@ -89,7 +94,7 @@ void setup() {
   Serial.println(ESP.getFreeHeap());
 
   GDisplay* display = gdispGetDisplay(0);
-  WeatherUI ui = WeatherUI(cityId, display);
+  AccuWeatherUI ui(cityId, display);
   auto heapBefore = ESP.getFreeHeap();
 
   uint sleepTime = TIME_TO_SLEEP;

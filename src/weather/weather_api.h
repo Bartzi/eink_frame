@@ -14,43 +14,28 @@ typedef struct {
     float humidity;
     float windSpeed;
     float windDirection;
+    float rainProbability;
     String icon;
     String date;
     String city;
+    String phrase;
 } WeatherData;
 
 
 class WeatherAPI {
     public:
         WeatherAPI(String cityId);
-        void fetchForecast(std::vector<WeatherData> &weatherData);
-        std::unique_ptr<uint8_t[]> fetchWeatherIcon(String iconId);
+        virtual void fetchForecast(std::vector<WeatherData> &weatherData) = 0;
+        virtual std::unique_ptr<uint8_t[]> fetchWeatherIcon(String iconId) = 0;
 
     private:
         String apiEndpoint = F("api.openweathermap.org");
+        std::map<String, String> iconMap;
+
+    protected:
         String cityId;
         String iconEndpoint = F("https://www.iconsdb.com");
         int httpPort;
-        std::map<String, String> iconMap {
-            {"01d", "sun"},
-            {"02d", "partly-cloudy-day"},
-            {"03d", "cloudy"},
-            {"04d", "clouds"},
-            {"09d", "little-rain"},
-            {"10d", "rain"},
-            {"11d", "storm"},
-            {"13d", "snow"},
-            {"50d", "fog-day"},
-            {"01n", "moon-4"},
-            {"02n", "partly-cloudy-night"},
-            {"03n", "cloudy"},
-            {"04n", "clouds"},
-            {"09n", "little-rain"},
-            {"10n", "rain"},
-            {"11n", "storm"},
-            {"13n", "snow"},
-            {"50n", "fog-night"}
-        };
 
         const char* iconCertificate =  \
         "-----BEGIN CERTIFICATE-----\n" \
