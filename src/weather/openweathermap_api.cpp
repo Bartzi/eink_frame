@@ -84,7 +84,7 @@ void OpenWeatherMapAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
         data.pressure = mainData["pressure"];
         data.humidity = mainData["humidity"];
         data.windSpeed = timeStep["wind"]["speed"];
-        data.windDirection = timeStep["wind"]["deg"];
+        data.windDirection = String(timeStep["wind"]["deg"].as<char*>());
 
         JsonObject condition = timeStep["weather"][0];
         data.icon = String(condition["icon"].as<char*>());
@@ -99,64 +99,6 @@ void OpenWeatherMapAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
     client.stop();
 }
 
-
-std::unique_ptr<uint8_t[]> OpenWeatherMapAPI::fetchWeatherIcon(String iconId) {
-    HTTPClient https;
-
-    String iconName = this->iconMap[iconId];
-    Serial.println("IconName vs. Mapped result");
-    Serial.println(iconId);
-    Serial.println(iconName);
-
-    String url = this->iconEndpoint + "/icons/download/black/" + iconName + "-64.png";
-    Serial.println(url);
-
-    if (!https.begin(url, iconCertificate)) {
-        Serial.println(F("[HTTP] Can not establish connection to Server."));
-        throw std::logic_error("Can not establish HTTP connection!");
-    }
-
-    int httpCode = https.GET();
-    Serial.print(F("[HTTP] GET... code: "));
-    Serial.println(httpCode);
-
-    if (httpCode != HTTP_CODE_OK) {
-        Serial.print(F("[HTTP] GET... failed, error: "));
-        Serial.println(https.errorToString(httpCode));
-        https.end();
-        throw std::logic_error("HTTP Code not OK");
-    }
-
-    int total = https.getSize();
-    int remaining = total;
-
-    uint8_t buffer[128] = {0};
-    std::unique_ptr<uint8_t[]> destination{new uint8_t[total]};
-    int position = 0;
-
-    WiFiClient* stream = https.getStreamPtr();
-
-    while(https.connected() && (remaining > 0 || remaining == -1)) {
-        size_t size = stream->available();
-
-        if (size) {
-            int count = stream->readBytes(buffer, (size > sizeof(buffer)) ? sizeof(buffer) : size);
-            if (position + count <= total) {
-                std::memcpy(destination.get() + position, &buffer, count);
-            } else {
-                Serial.print(F("[HTTP] Got too much data for destination!"));
-                Serial.print(String("got ") + String(position + count - total) + " bytes too much\n");
-                throw std::out_of_range("Got too much data!");
-            }
-            position += count;
-            if (remaining > 0) {
-                remaining -= count;
-            }
-        }
-        delay(1);
-    }
-    
-    Serial.println(F("[HTTP] Finished Download"));
-    https.end();
-    return std::move(destination);
+String OpenWeatherMapAPI::getIconName(String iconId) {
+    return iconMap[iconId];
 }

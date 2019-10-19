@@ -1,15 +1,11 @@
 #include "openweathermap_ui.h"
 
-OpenWeatherMapUI::OpenWeatherMapUI(String cityId, GDisplay* display) : WeatherUI(display), api(cityId) {}
+OpenWeatherMapUI::OpenWeatherMapUI(GDisplay* display) : WeatherUI(display) {}
 
-void OpenWeatherMapUI::updateForecast() {
+void OpenWeatherMapUI::updateForecast(std::vector<WeatherData> weatherInfo, WeatherAPI* api) {
     Serial.println("Start Update");
     font_t timeFont = gdispOpenFont("DejaVuSans32");
     font_t infoFont = gdispOpenFont("DejaVuSans16");
-
-    std::vector<WeatherData> weatherInfo;
-    api.fetchForecast(weatherInfo);
-    Serial.println("Fetched Forecast");
 
     renderCenteredString("Das Wetter in " +  weatherInfo[0].city, 0, 34, 640, timeFont, GFX_BLACK);
 
@@ -18,7 +14,7 @@ void OpenWeatherMapUI::updateForecast() {
         // first fetch the icon
         std::unique_ptr<uint8_t[]> icon;
         try {
-            icon = api.fetchWeatherIcon(weatherInfo[i].icon);
+            icon = api->fetchWeatherIcon(weatherInfo[i].icon);
         } catch (const std::logic_error &e) {
             Serial.println(F("Could not fetch weather icon"));
             Serial.println(e.what());

@@ -12,9 +12,9 @@ typedef struct {
     float maxTemperature;
     float pressure;
     float humidity;
-    float windSpeed;
-    float windDirection;
     float rainProbability;
+    float windSpeed;
+    String windDirection;
     String icon;
     String date;
     String city;
@@ -26,16 +26,14 @@ class WeatherAPI {
     public:
         WeatherAPI(String cityId);
         virtual void fetchForecast(std::vector<WeatherData> &weatherData) = 0;
-        virtual std::unique_ptr<uint8_t[]> fetchWeatherIcon(String iconId) = 0;
-
-    private:
-        String apiEndpoint = F("api.openweathermap.org");
-        std::map<String, String> iconMap;
+        std::unique_ptr<uint8_t[]> fetchWeatherIcon(String iconId);
 
     protected:
+        virtual String getIconName(String iconId) = 0;
         String cityId;
         String iconEndpoint = F("https://www.iconsdb.com");
         int httpPort;
+        
 
         const char* iconCertificate =  \
         "-----BEGIN CERTIFICATE-----\n" \

@@ -7,14 +7,15 @@ class AccuWeatherAPI: public WeatherAPI {
     public:
         AccuWeatherAPI(String cityId);
         void fetchForecast(std::vector<WeatherData> &weatherData);
-        std::unique_ptr<uint8_t[]> fetchWeatherIcon(String iconId);
+        // std::unique_ptr<uint8_t[]> fetchWeatherIcon(String iconId);
+
+    protected:
+        String getIconName(String iconId);
 
     private:
         String apiEndpoint = F("dataservice.accuweather.com");
         String cityName = F("Potsdam");
         int hourIndices[4] = {0, 3, 6, 9};
-
-    protected:
         std::map<String, String> iconMap {
             {"1", "sun"},
             {"2", "sun"},

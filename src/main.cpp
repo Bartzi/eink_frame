@@ -6,8 +6,9 @@ extern "C" {
   #include "gfx.h"
 }
 
+#include "sleep/sleep.h"
 #include "temperature/temperature.h"
-#include "weather/weather_api.h"
+#include "weather/accuweather_api.h"
 #include "weather_ui/accuweather_ui.h"
 // #include "weather_ui/openweathermap_ui.h"
 #include "wifi_credentials.h"
@@ -15,10 +16,6 @@ extern "C" {
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
-#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define S_TO_MIN_FACTOR 60
-#define TIME_TO_SLEEP  60        /* Time ESP32 will go to sleep (in units) */
-#define TIME_TO_SLEEP_BETWEEN_FAILURE 1
 
 font_t font = gdispOpenFont("DejaVuSans32");
 TemperatureSensor temperatureSensor;
@@ -53,36 +50,17 @@ bool connectToWifi(bool withPassword) {
   return true;
 }
 
-void print_wakeup_reason(){
-  esp_sleep_wakeup_cause_t wakeup_reason;
-
-  wakeup_reason = esp_sleep_get_wakeup_cause();
-
-  switch(wakeup_reason)
-  {
-    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
-    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
-    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
-    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
-    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
-  }
-}
-
-void gotoSleep(uint sleepTime) {
-  print_wakeup_reason();
-  esp_sleep_enable_timer_wakeup(sleepTime * uS_TO_S_FACTOR * S_TO_MIN_FACTOR);
-  Serial.println("Setup ESP32 to sleep for every " + String(sleepTime) +
-  " minutes");
-  Serial.println("Going to sleep now");
-  Serial.flush(); 
-  esp_deep_sleep_start();
-}
-
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   Serial.begin(115200);
   delay(10);
+
+  bool connectionSuccessful = connectToWifi(true);
+  Serial.println(ESP.getFreeHeap());
+
+  AccuWeatherAPI api(cityId);
+  std::vector<WeatherData> weatherInfo;
+  api.fetchForecast(weatherInfo);
 
   Serial.println(ESP.getFreeHeap());
   Serial.println("gfxInit");
@@ -90,18 +68,15 @@ void setup() {
   Serial.println("gfxInit done");
   Serial.println(ESP.getFreeHeap());
 
-  bool connectionSuccessful = connectToWifi(true);
-  Serial.println(ESP.getFreeHeap());
-
   GDisplay* display = gdispGetDisplay(0);
-  AccuWeatherUI ui(cityId, display);
+  AccuWeatherUI ui(display);
   auto heapBefore = ESP.getFreeHeap();
 
-  uint sleepTime = TIME_TO_SLEEP;
+  bool errorSleep = false;
   if (connectionSuccessful) {
-    ui.updateForecast();
+    ui.updateForecast(weatherInfo, &api);
   } else {
-    sleepTime = TIME_TO_SLEEP_BETWEEN_FAILURE;
+    errorSleep = true;
     ui.showConnectionError(String(ssid), String(TIME_TO_SLEEP_BETWEEN_FAILURE));
   }
 
@@ -110,7 +85,7 @@ void setup() {
 
   gPowermode powerMode = gdispGetPowerMode();
   Serial.printf("powermode: %d", powerMode);
-  gotoSleep(sleepTime);
+  gotoSleep(errorSleep);
 }
 
 void loop() {

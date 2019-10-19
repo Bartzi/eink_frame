@@ -5,10 +5,12 @@ extern "C" {
   #include "gfx.h"
 }
 
+#include <weather/weather_api.h>
+
 class WeatherUI {
     public:
         WeatherUI(GDisplay* display);
-        virtual void updateForecast() = 0;
+        virtual void updateForecast(std::vector<WeatherData> weatherInfo, WeatherAPI* api) = 0;
         void showConnectionError(String ssid, String timeout);
 
     protected:

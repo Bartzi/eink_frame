@@ -1,14 +1,12 @@
 #include "accuweather_ui.h"
 
-AccuWeatherUI::AccuWeatherUI(String cityId, GDisplay* display) : WeatherUI(display), api(cityId) {}
+AccuWeatherUI::AccuWeatherUI(GDisplay* display) : WeatherUI(display) {}
 
-void AccuWeatherUI::updateForecast() {
+void AccuWeatherUI::updateForecast(std::vector<WeatherData> weatherInfo, WeatherAPI* api) {
     font_t largeFont = gdispOpenFont("DejaVuSans32");
-    font_t smallFont = gdispOpenFont("DejaVuSans16");
+    font_t smallFont = gdispOpenFont("DejaVuSans12");
     font_t mediumFont = gdispOpenFont("DejaVuSans20");
-
-    std::vector<WeatherData> weatherInfo;
-    api.fetchForecast(weatherInfo);
+    font_t betweenFont = gdispOpenFont("DejaVuSans16");
 
     renderCenteredString("Das Wetter in " +  weatherInfo[0].city, 0, 34, 640, largeFont, GFX_BLACK);
 
@@ -16,7 +14,7 @@ void AccuWeatherUI::updateForecast() {
         // first fetch the icon
         std::unique_ptr<uint8_t[]> icon;
         try {
-            icon = api.fetchWeatherIcon(weatherInfo[i].icon);
+            icon = api->fetchWeatherIcon(weatherInfo[i].icon);
         } catch (const std::logic_error &e) {
             Serial.println(F("Could not fetch weather icon"));
             Serial.println(e.what());
@@ -35,12 +33,13 @@ void AccuWeatherUI::updateForecast() {
         renderCenteredString(String(weatherInfo[i].phrase), startX, startY + 120, boxWidth, smallFont, GFX_BLACK);
         renderCenteredString(String(weatherInfo[i].temperature) + F(" C"), startX, startY + 150, boxWidth, mediumFont, GFX_RED);
         renderCenteredString(String(weatherInfo[i].rainProbability) + F(" %"), startX, startY + 175, boxWidth, mediumFont, GFX_BLACK);
-        // renderCenteredString(String(weatherInfo[i].windSpeed) + F(" km/h aus ") + weatherInfo[i].windDirection, startX, startY + 210, boxWidth, largeFont, GFX_BLACK);
-        // renderCenteredString(String(weatherInfo[i].windDirection), startX, startY + 220, boxWidth, largeFont, GFX_BLACK);
+        renderCenteredString(String(weatherInfo[i].windSpeed) + F(" km/h (") + String(weatherInfo[i].windDirection) + F(")"), startX, startY + 200, boxWidth, betweenFont, GFX_BLACK);
+        // renderCenteredString(String(F("aus ")) + String(weatherInfo[i].windDirection), startX, startY + 225, boxWidth, mediumFont, GFX_BLACK);
     }
 
     gdispGFlush(display);
     gdispCloseFont(largeFont);
     gdispCloseFont(smallFont);
     gdispCloseFont(mediumFont);
+    gdispCloseFont(betweenFont);
 }

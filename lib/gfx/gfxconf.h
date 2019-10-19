@@ -102,7 +102,7 @@
 //    #define GDISP_INCLUDE_FONT_UI2                   GFXOFF		// The smallest preferred font.
 //    #define GDISP_INCLUDE_FONT_LARGENUMBERS          GFXOFF
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS10          GFXOFF
-//    #define GDISP_INCLUDE_FONT_DEJAVUSANS12          GFXOFF
+   #define GDISP_INCLUDE_FONT_DEJAVUSANS12           GFXON
    #define GDISP_INCLUDE_FONT_DEJAVUSANS16           GFXON
    #define GDISP_INCLUDE_FONT_DEJAVUSANS20           GFXON
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS24          GFXOFF

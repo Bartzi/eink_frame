@@ -8,10 +8,11 @@ class OpenWeatherMapAPI : public WeatherAPI {
         void fetchForecast(std::vector<WeatherData> &weatherData);
         std::unique_ptr<uint8_t[]> fetchWeatherIcon(String iconId);
 
-    private:
-        String apiEndpoint = F("api.openweathermap.org");
+    protected:
+        String getIconName(String iconId);
 
     private:
+        String apiEndpoint = F("api.openweathermap.org");
         std::map<String, String> iconMap {
             {"01d", "sun"},
             {"02d", "partly-cloudy-day"},
