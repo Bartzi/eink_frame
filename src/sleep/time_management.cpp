@@ -1,14 +1,4 @@
-#pragma once
-
-#include "Arduino.h"
-#include <NTPClient.h>
-#include <WiFi.h>
-#include <WiFiUdp.h>
-
-#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  60        /* Time ESP32 will go to sleep (in units) */
-#define TIME_TO_SLEEP_BETWEEN_FAILURE 1
-
+#include "time_management.h"
 
 void print_wakeup_reason(){
     esp_sleep_wakeup_cause_t wakeup_reason;
@@ -26,18 +16,20 @@ void print_wakeup_reason(){
     }
 }
 
-uint getNTPBasedSleepTime(int wakeUpMinute) {
-    WiFiUDP ntpUDP;
-    NTPClient timeClient(ntpUDP, "europe.pool.ntp.org");
+TimeManager::TimeManager(GDisplay* display) : display(display), timeClient(ntpUDP, "europe.pool.ntp.org") {
     timeClient.begin();
-    
     bool success = timeClient.update();
     if (!success) {
         Serial.println("Could not get the current time, trying again for once!");
         timeClient.update();
     }
+};
 
-    Serial.println(timeClient.getFormattedTime());
+String TimeManager::getCurrentTime() {
+    return timeClient.getFormattedTime();
+}
+
+uint TimeManager::getSleepTime(int wakeUpMinute) {
     int minutes = timeClient.getMinutes();
     int seconds = timeClient.getSeconds();
     int secondsToSleep = 60 - seconds;
@@ -45,14 +37,24 @@ uint getNTPBasedSleepTime(int wakeUpMinute) {
     return minutesToSleep * 60 + secondsToSleep;
 }
 
-void gotoSleep(bool errorSleep) {
+void TimeManager::showTimeStamp() {
+    font_t font = gdispOpenFont("DejaVuSans12");
+    String text = String(F("Last Update: ")) + this->getCurrentTime() + " UTC";
+
+    gdispGDrawStringBox(display, 0, gdispGGetHeight(display) - 15, 640, 15, text.c_str(), font, GFX_BLACK, justifyRight);
+
+    gdispCloseFont(font);
+}
+
+
+void TimeManager::gotoSleep(bool errorSleep, int sleepMinutes) {
     print_wakeup_reason();
 
     uint sleepTimeInSeconds;
     if (errorSleep) {   
-        sleepTimeInSeconds = 60;
+        sleepTimeInSeconds = sleepMinutes * 60;
     } else {
-        sleepTimeInSeconds = getNTPBasedSleepTime(59);
+        sleepTimeInSeconds = this->getSleepTime(59);
     }
 
     esp_sleep_enable_timer_wakeup(sleepTimeInSeconds * uS_TO_S_FACTOR);

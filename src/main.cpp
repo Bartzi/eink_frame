@@ -6,7 +6,7 @@ extern "C" {
   #include "gfx.h"
 }
 
-#include "sleep/sleep.h"
+#include "sleep/time_management.h"
 #include "temperature/temperature.h"
 #include "weather/accuweather_api.h"
 #include "weather_ui/accuweather_ui.h"
@@ -55,13 +55,27 @@ void setup() {
   Serial.begin(115200);
   delay(10);
 
-  bool connectionSuccessful = connectToWifi(true);
+  bool hasNoError = connectToWifi(true);
+  int errorSleepMinutes = 1;
+
   Serial.println(ESP.getFreeHeap());
 
+  // create default error message
+  String errorMessage = String(F("Could not connect to WiFi!"));
+  String errorExtraInfo = String(ssid);
+
+  // get the current forecast
   AccuWeatherAPI api(cityId);
   std::vector<WeatherData> weatherInfo;
-  api.fetchForecast(weatherInfo);
+  String message = api.fetchForecast(weatherInfo);
+  if (message.length() > 0) {
+    hasNoError = false;
+    errorSleepMinutes = 60;
+    errorMessage = message;
+    errorExtraInfo = String(F(""));
+  }
 
+  // init GUI
   Serial.println(ESP.getFreeHeap());
   Serial.println("gfxInit");
   gfxInit();
@@ -70,14 +84,16 @@ void setup() {
 
   GDisplay* display = gdispGetDisplay(0);
   AccuWeatherUI ui(display);
+  TimeManager timeManager(display);
+  timeManager.showTimeStamp();
+  
   auto heapBefore = ESP.getFreeHeap();
 
-  bool errorSleep = false;
-  if (connectionSuccessful) {
+  // display forecast or error
+  if (hasNoError) {
     ui.updateForecast(weatherInfo, &api);
   } else {
-    errorSleep = true;
-    ui.showConnectionError(String(ssid), String(TIME_TO_SLEEP_BETWEEN_FAILURE));
+    ui.showErrorMessage(errorMessage, errorExtraInfo, String(errorSleepMinutes));
   }
 
   auto heapAfter = ESP.getFreeHeap();
@@ -85,9 +101,8 @@ void setup() {
 
   gPowermode powerMode = gdispGetPowerMode();
   Serial.printf("powermode: %d", powerMode);
-  gotoSleep(errorSleep);
+  timeManager.gotoSleep(!hasNoError, errorSleepMinutes);
 }
 
 void loop() {
 }
-

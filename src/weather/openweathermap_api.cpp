@@ -29,12 +29,14 @@ OpenWeatherMapAPI::OpenWeatherMapAPI(String cityId) : WeatherAPI(cityId) {
     };
 }
 
-void OpenWeatherMapAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
+String OpenWeatherMapAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
     WiFiClient client;
+    String message;
 
     if (!client.connect(this->apiEndpoint.c_str(), this->httpPort)) {
-        Serial.println(F("Can not Connect to Weather API!"));
-        return;
+        message = F("Can not Connect to Weather API!");
+        Serial.println(message);
+        return message;
     }
 
     String url = "/data/2.5/forecast?id=" + this->cityId + "&APPID=" + OPENWEATHERMAP_API_KEY + "&units=metric&cnt=4";
@@ -48,9 +50,10 @@ void OpenWeatherMapAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
     unsigned long timeout = millis();
     while (client.available() == 0) {
         if (millis() - timeout > 5000) {
-            Serial.println(F("Timeout while fetching data from weatherforecast Server"));
+            message = F("Timeout while fetching data from weatherforecast Server");
+            Serial.println(message);
             client.stop();
-            return;
+            return message;
         }
     }
 
@@ -69,9 +72,9 @@ void OpenWeatherMapAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
     Serial.println(jsonData.memoryUsage());
 
     if (err) {
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(err.c_str());
-        return;
+        message = String(F("deserializeJson() failed with code ")) + String(err.c_str());
+        Serial.println(message);
+        return message;
     }
     
     Serial.println("parsing weather info into data structure");
@@ -97,6 +100,7 @@ void OpenWeatherMapAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
     }
 
     client.stop();
+    return "";
 }
 
 String OpenWeatherMapAPI::getIconName(String iconId) {

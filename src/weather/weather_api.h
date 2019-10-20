@@ -25,7 +25,7 @@ typedef struct {
 class WeatherAPI {
     public:
         WeatherAPI(String cityId);
-        virtual void fetchForecast(std::vector<WeatherData> &weatherData) = 0;
+        virtual String fetchForecast(std::vector<WeatherData> &weatherData) = 0;
         std::unique_ptr<uint8_t[]> fetchWeatherIcon(String iconId);
 
     protected:

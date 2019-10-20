@@ -4,16 +4,28 @@
 
 WeatherUI::WeatherUI(GDisplay* display): display(display) {}
 
-void WeatherUI::showConnectionError(String ssid, String timeout) {
-    font_t font = gdispOpenFont("DejaVuSans32");
+void WeatherUI::showErrorMessage(String message, String extraInfo, String timeout) {
+    font_t font = gdispOpenFont("DejaVuSans20");
     String text = String(F("Could not connect to WiFi!"));
-    renderCenteredString(text, 0, 150, 640, font, GFX_RED);
+    renderCenteredString(message, 0, 150, 640, font, GFX_RED);
 
-    text = String(F("(")) + ssid + F(")");
-    renderCenteredString(text, 0, 190, 640, font, GFX_BLACK);
+    if (extraInfo.length() > 0) {
+        text = String(F("(")) + extraInfo + F(")");
+        renderCenteredString(text, 0, 190, 640, font, GFX_BLACK);
+    }
 
     text = String(F("Trying again in ")) + timeout + F(" minutes");
     renderCenteredString(text, 0, 230, 640, font, GFX_BLACK);
+
+    gdispGFlush(display);
+    gdispCloseFont(font);
+}
+
+void WeatherUI::showTimeStamp(String formattedTime) {
+    font_t font = gdispOpenFont("DejavuSans12");
+    String text = String(F("Letztes Update: ")) + formattedTime + " UTC";
+
+    gdispGDrawStringBox(display, 0, gdispGGetHeight(display) - 15, 640, 15, text.c_str(), font, GFX_BLACK, justifyRight);
 
     gdispGFlush(display);
     gdispCloseFont(font);

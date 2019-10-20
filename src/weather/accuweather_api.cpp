@@ -8,14 +8,16 @@
 
 AccuWeatherAPI::AccuWeatherAPI(String cityId) : WeatherAPI(cityId) {}
 
-void AccuWeatherAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
+String AccuWeatherAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
     WiFiClient client;
+    String message;
 
     Serial.println("connect to api endpoint");
 
     if (!client.connect(this->apiEndpoint.c_str(), this->httpPort)) {
-        Serial.println(F("Can not Connect to Weather API!"));
-        return;
+        message = F("Can not Connect to Weather API!");
+        Serial.println(message);
+        return message;
     }
 
     String url = "/forecasts/v1/hourly/12hour/" + this->cityId + "?apikey=" + ACCUWEATHER_API_KEY + "&language=de-de&details=true&metric=true";
@@ -27,9 +29,10 @@ void AccuWeatherAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
     unsigned long timeout = millis();
     while (client.available() == 0) {
         if (millis() - timeout > 5000) {
-            Serial.println(F("Timeout while fetching data from weatherforecast Server"));
+            message = F("Timeout while fetching data from weatherforecast Server");
+            Serial.println(message);
             client.stop();
-            return;
+            return message;
         }
     }
 
@@ -39,12 +42,21 @@ void AccuWeatherAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
     }
 
     DynamicJsonDocument jsonData(25000);
-    DeserializationError err = deserializeJson(jsonData, result); 
+    DeserializationError err = deserializeJson(jsonData, result);
 
     if (err) {
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(err.c_str());
-        return;
+        message = String(F("deserializeJson() failed with code ")) + String(err.c_str());
+        Serial.println(message);
+        return message;
+    }
+
+    JsonObject root = jsonData.as<JsonObject>();
+
+    if (!root["Code"].isNull()) {
+        // we got an error from the server!
+        message = root["Message"].as<String>();
+        Serial.println(message);
+        return message;
     }
 
     for (int index : hourIndices) {
@@ -67,6 +79,7 @@ void AccuWeatherAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
     }
 
     client.stop();
+    return "";
 }
 
 String AccuWeatherAPI::getIconName(String iconId) {

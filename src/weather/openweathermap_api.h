@@ -5,7 +5,7 @@
 class OpenWeatherMapAPI : public WeatherAPI {
     public:
         OpenWeatherMapAPI(String cityId);
-        void fetchForecast(std::vector<WeatherData> &weatherData);
+        String fetchForecast(std::vector<WeatherData> &weatherData);
         std::unique_ptr<uint8_t[]> fetchWeatherIcon(String iconId);
 
     protected:

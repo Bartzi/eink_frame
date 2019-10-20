@@ -11,7 +11,8 @@ class WeatherUI {
     public:
         WeatherUI(GDisplay* display);
         virtual void updateForecast(std::vector<WeatherData> weatherInfo, WeatherAPI* api) = 0;
-        void showConnectionError(String ssid, String timeout);
+        void showErrorMessage(String message, String extraInfo, String timeout);
+        void showTimeStamp(String formattedTime);
 
     protected:
         void showImage(void* data, coord_t startX, coord_t startY, coord_t maxWidth);
