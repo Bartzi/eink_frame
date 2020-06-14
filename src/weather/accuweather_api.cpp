@@ -41,7 +41,7 @@ String AccuWeatherAPI::fetchForecast(std::vector<WeatherData> &weatherData) {
         result = client.readStringUntil('\r');
     }
 
-    DynamicJsonDocument jsonData(25000);
+    DynamicJsonDocument jsonData(35000);
     DeserializationError err = deserializeJson(jsonData, result);
 
     if (err) {
